@@ -1,0 +1,12 @@
+<launch>
+	<node name="stage" pkg="stage_ros" type="stageros"
+	      args="$(find lab4)/world/playground.world" />
+	<node name="astar" pkg="lab4" type="astar.cpp" output="screen" args= "$(find lab5)/world/map.txt"/>
+
+    <arg name = "goalx" default="4.5" />
+    <param name="goalx" type="double" value="$(arg goalx)" />
+
+    <arg name = "goaly" default="9.0" />
+    <param name="goaly" type="double" value="$(arg goaly)"/>
+
+</launch>
