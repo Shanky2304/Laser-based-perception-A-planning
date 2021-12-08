@@ -4,9 +4,15 @@
 #define ROW 20
 #define COLUMN 18
 
+#include <stdio.h>
+#include <unistd.h>
 #include <ros/ros.h>
 #include <iostream>
 #include <fstream>
+
+#define GetCurrentDir getcwd
+
+using namespace std;
 
 class Astar {
 
@@ -15,31 +21,36 @@ private:
 
     int map[20][18];
 
-    double inlier_threshold = 0.07;
 
 public:
     Astar() {
         n = ros::NodeHandle("~");
 
         // Initalise the map
-        ifstream fp("map.txt");
-        if (!fp) {
-            cout << "Error, file couldn't be opened" << endl;
-            return 1;
-        }
-        int val;
-        for (int row = 0; row < ROW; row++) {
-            for (int column = 0; column < COLUMN; column++) {
+	fstream mapfile;
+	mapfile.open("map.txt", ios::in);
+	if (mapfile.is_open()) {
+	char val;
+	int row = 0, col = 0;
+        while(!mapfile.eof()) {
+		
                 // If not valid digit ASCII ignore
-                fp >> val;
-                if (val == 0 || val == 1)
-                    map[row][column] = val;
-                if (!fp) {
-                    cout << "Error reading file for element " << row << "," << col << endl;
-                    return 1;
-                }
-            }
+                val = mapfile.get();
+                if (val == '0' || val == '1') {
+		
+                    map[row][col] = (int) val - (int) '0';
+
+		    col++;
+                    if(col % COLUMN == 0) {
+                        row++;
+                    }
+                    col = col % COLUMN;
+
+		}    
         }
+	mapfile.close();
+	}
+
 
         for (int row = 0; row < ROW; row++) {
             for (int column = 0; column < COLUMN; column++) {
@@ -50,4 +61,13 @@ public:
 
     }
 
+
 };
+
+
+int main(int argc, char ** argv) {
+    ros::init(argc, argv, "astar");
+    Astar astar;
+    ros::spin();
+    return 0;
+}

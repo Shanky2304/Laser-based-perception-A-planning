@@ -138,7 +138,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/lab4_node.cpp)
 add_executable(astar src/astar.cpp)
 target_link_libraries(astar ${LIBS})
-add_dependencies(astar lab4_generate_messages_cpp)
+#add_dependencies(astar lab4_generate_messages_cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
