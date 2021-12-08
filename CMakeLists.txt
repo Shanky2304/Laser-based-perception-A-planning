@@ -8,6 +8,7 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  roslib
   roscpp
   rospy
   std_msgs
@@ -108,6 +109,7 @@ catkin_package(
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
+set(LIBS ${LIBS} ${catkin_LIBRARIES})
 
 ###########
 ## Build ##
@@ -134,7 +136,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/lab4_node.cpp)
-
+add_executable(astar src/astar.cpp)
+target_link_libraries(astar ${LIBS})
+add_dependencies(astar lab4_generate_messages_cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
