@@ -1,6 +1,8 @@
 //
 // Created by Vivek Shankar on 12/6/21.
 //
+#define ROW 20
+#define COLUMN 18
 
 #include <ros/ros.h>
 #include <iostream>
@@ -21,23 +23,31 @@ public:
 
         // Initalise the map
         ifstream fp("map.txt");
-        if (! fp) {
+        if (!fp) {
             cout << "Error, file couldn't be opened" << endl;
             return 1;
         }
         int val;
-        for(int row = 0; row < 20; row++) {  // stop loops if nothing to read
-            for(int column = 0; column < 18; column++){
+        for (int row = 0; row < ROW; row++) {
+            for (int column = 0; column < COLUMN; column++) {
                 // If not valid digit ASCII ignore
                 fp >> val;
-                if(val == 0 || val == 1)
+                if (val == 0 || val == 1)
                     map[row][column] = val;
-                if ( ! fp ) {
+                if (!fp) {
                     cout << "Error reading file for element " << row << "," << col << endl;
                     return 1;
                 }
             }
         }
+
+        for (int row = 0; row < ROW; row++) {
+            for (int column = 0; column < COLUMN; column++) {
+                std::cout<<map[row][column]<<", ";
+            }
+            std::cout<<endl;
+        }
+
     }
 
 };
