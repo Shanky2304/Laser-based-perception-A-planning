@@ -25,10 +25,13 @@ public:
             cout << "Error, file couldn't be opened" << endl;
             return 1;
         }
+        int val;
         for(int row = 0; row < 20; row++) {  // stop loops if nothing to read
             for(int column = 0; column < 18; column++){
                 // If not valid digit ASCII ignore
-                fp >> map[row][column];
+                fp >> val;
+                if(val == 0 || val == 1)
+                    map[row][column] = val;
                 if ( ! fp ) {
                     cout << "Error reading file for element " << row << "," << col << endl;
                     return 1;
