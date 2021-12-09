@@ -34,6 +34,8 @@ private:
     int map[20][18];
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
+    node node[ROW][COLUMN];
+
     // Meant to store row, col of the cell where the src or goal lies.
     pair<int, int> src;
     pair<int, int> goal;
@@ -48,20 +50,20 @@ public:
         double goal_x, goal_y;
         n.getParam("/goalx", goal_x);
         n.getParam("/goaly", goal_y);
-	cout<<"For goal at: ("<<goal_x<<", "<<goal_y<<")"<<endl;
+        cout << "For goal at: (" << goal_x << ", " << goal_y << ")" << endl;
 
-	cout<<"Origin: ("<<origin.first<<" ,"<<origin.second<<")";
+        cout << "Origin: (" << origin.first << " ," << origin.second << ")";
 
         // Use co-ordinates and size of map to evaluate the i, j of src and goal;
         src.first = (int) (origin.first - start_xy.second);
         src.second = (int) (origin.second + start_xy.first);
 
-	cout<<"Src_ij: ("<<src.first<<" ,"<<src.second<<")";
+        cout << "Src_ij: (" << src.first << " ," << src.second << ")";
 
         goal.first = (int) (origin.first - goal_y);
         goal.second = (int) (origin.second + goal_x);
 
-	cout<<"Goal_ij: ("<<goal.first<<" ,"<<goal.second<<")";
+        cout << "Goal_ij: (" << goal.first << " ," << goal.second << ")";
 
 
         // Initalise the map
@@ -91,6 +93,14 @@ public:
 
         // Plan the path
         plan(map);
+
+        int r = goal.first, c = goal.second;
+
+        while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
+            cout << "(" << r << ", " << c << ") <-";
+            r = node[r][c].parent_i;
+            c = node[r][c].parent_j;
+        }
 
     }
 
@@ -132,7 +142,7 @@ public:
                 // Either the source or the destination is blocked
                 if (!isUnBlocked(map, src.first, src.second)
                     || !isUnBlocked(map, goal.first, goal.second)) {
-                    printf("Source or the destination is blocked (%d, %d) \n", src.first, src.second);
+                    printf("Source or the destination is blocked. \n");
                     return false;
                 }
 
@@ -144,8 +154,6 @@ public:
 
                 bool closedList[ROW][COLUMN];
                 memset(closedList, 0, sizeof(closedList));
-
-                node node[ROW][COLUMN];
 
                 // Initialise all nodes in the map
                 int i, j;
