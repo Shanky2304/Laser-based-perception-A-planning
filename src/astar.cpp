@@ -46,15 +46,22 @@ public:
         n = ros::NodeHandle("~");
 
         double goal_x, goal_y;
-        n.getParam("goalx", goal_x);
-        n.getParam("goaly", goal_y);
+        n.getParam("/goalx", goal_x);
+        n.getParam("/goaly", goal_y);
+	cout<<"For goal at: ("<<goal_x<<", "<<goal_y<<")"<<endl;
+
+	cout<<"Origin: ("<<origin.first<<" ,"<<origin.second<<")";
 
         // Use co-ordinates and size of map to evaluate the i, j of src and goal;
-        src.first = (int) (origin.first + start_xy.second);
-        src.second = (int) (origin.second - start_xy.first);
+        src.first = (int) (origin.first - start_xy.second);
+        src.second = (int) (origin.second + start_xy.first);
 
-        goal.first = (int) (origin.first + goal_y);
-        goal.second = (int) (origin.second - goal_x);
+	cout<<"Src_ij: ("<<src.first<<" ,"<<src.second<<")";
+
+        goal.first = (int) (origin.first - goal_y);
+        goal.second = (int) (origin.second + goal_x);
+
+	cout<<"Goal_ij: ("<<goal.first<<" ,"<<goal.second<<")";
 
 
         // Initalise the map
@@ -125,7 +132,7 @@ public:
                 // Either the source or the destination is blocked
                 if (!isUnBlocked(map, src.first, src.second)
                     || !isUnBlocked(map, goal.first, goal.second)) {
-                    printf("Source or the destination is blocked\n");
+                    printf("Source or the destination is blocked (%d, %d) \n", src.first, src.second);
                     return false;
                 }
 
