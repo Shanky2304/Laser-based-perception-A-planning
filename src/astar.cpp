@@ -87,12 +87,12 @@ public:
 
     bool isValid(int row, int col) {
         return (row >= 0) && (row < ROW) && (col >= 0)
-               && (col < COL);
+               && (col < COLUMN);
     }
 
-    bool isUnBlocked(int map[][COL], int row, int col) {
+    bool isUnBlocked(int map[][COLUMN], int row, int col) {
         // Returns true if the cell is not blocked else false
-        if (grid[row][col] == 0)
+        if (map[row][col] == 0)
             return (true);
         else
             return (false);
@@ -105,7 +105,7 @@ public:
                 + (col - goal.second) * (col - goal.second)));
     }
 
-    bool plan(int[][] map) {
+    bool plan(int[][COLUMN] map) {
 
         if (isValid(src.first, src.second)) {
 
@@ -114,23 +114,24 @@ public:
 
                 // Either the source or the destination is blocked
                 if (!isUnBlocked(map, src.first, src.second)
-                    || !isUnBlocked(map, dest.first, dest.second)) {
+                    || !isUnBlocked(map, goal.first, goal.second)) {
                     printf("Source or the destination is blocked\n");
                     return false;
                 }
 
                 // If the destination cell is the same as source cell
-                if (isDestination(src.first, src.second, dest)) {
+                if (isDestination(src.first, src.second, goal)) {
                     printf("We are already at the destination\n");
                     return false;
                 }
 
-                bool closedList[ROW][COL];
+                bool closedList[ROW][COLUMN];
                 memset(closedList, 0, sizeof(closedList));
 
                 node node[ROW][COLUMN];
 
                 // Initialise all nodes in the map
+                int i, j;
                 for (i = 0; i < ROW; i++) {
                     for (j = 0; j < COL; j++) {
                         node[i][j].f = FLT_MAX;
@@ -174,7 +175,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return true;
-                        } else if (!closedList[i - 1][j] && isUnBlocked(grid, i - 1, j)) {
+                        } else if (!closedList[i - 1][j] && isUnBlocked(map, i - 1, j)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i - 1, j, goal);
@@ -204,7 +205,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return true;
-                        } else if (!closedList[i + 1][j] && isUnBlocked(grid, i + 1, j)) {
+                        } else if (!closedList[i + 1][j] && isUnBlocked(map, i + 1, j)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i + 1, j, goal);
@@ -234,7 +235,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return true;
-                        } else if (!closedList[i][j - 1] && isUnBlocked(grid, i, j - 1)) {
+                        } else if (!closedList[i][j - 1] && isUnBlocked(map, i, j - 1)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i, j - 1, goal);
@@ -264,7 +265,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return reachedDest;
-                        } else if (!closedList[i][j + 1] && isUnBlocked(grid, i, j + 1)) {
+                        } else if (!closedList[i][j + 1] && isUnBlocked(map, i, j + 1)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i, j + 1, goal);
@@ -293,7 +294,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return reachedDest;
-                        } else if (!closedList[i - 1][j - 1] && isUnBlocked(grid, i - 1, j - 1)) {
+                        } else if (!closedList[i - 1][j - 1] && isUnBlocked(map, i - 1, j - 1)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i - 1, j - 1, goal);
@@ -323,7 +324,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return reachedDest;
-                        } else if (!closedList[i - 1][j + 1] && isUnBlocked(grid, i - 1, j + 1)) {
+                        } else if (!closedList[i - 1][j + 1] && isUnBlocked(map, i - 1, j + 1)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i - 1, j + 1, goal);
@@ -352,7 +353,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return reachedDest;
-                        } else if (!closedList[i + 1][j - 1] && isUnBlocked(grid, i + 1, j - 1)) {
+                        } else if (!closedList[i + 1][j - 1] && isUnBlocked(map, i + 1, j - 1)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i + 1, j - 1, goal);
@@ -382,7 +383,7 @@ public:
                             // Trace the path
                             reachedDest = 1;
                             return reachedDest;
-                        } else if (!closedList[i + 1][j + 1] && isUnBlocked(grid, i + 1, j + 1)) {
+                        } else if (!closedList[i + 1][j + 1] && isUnBlocked(map, i + 1, j + 1)) {
 
                             gTemp = node[i][j].g + 1;
                             hTemp = calculateHValue(i + 1, j + 1, goal);
