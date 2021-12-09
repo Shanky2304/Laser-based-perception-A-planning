@@ -105,7 +105,7 @@ public:
                 + (col - goal.second) * (col - goal.second)));
     }
 
-    bool plan(int[][COLUMN] map) {
+    bool plan(int map[][COLUMN]) {
 
         if (isValid(src.first, src.second)) {
 
@@ -133,7 +133,7 @@ public:
                 // Initialise all nodes in the map
                 int i, j;
                 for (i = 0; i < ROW; i++) {
-                    for (j = 0; j < COL; j++) {
+                    for (j = 0; j < COLUMN; j++) {
                         node[i][j].f = FLT_MAX;
                         node[i][j].g = FLT_MAX;
                         node[i][j].h = FLT_MAX;
@@ -416,6 +416,7 @@ public:
             printf("Source is invalid\n");
             return false;
         }
+        return false;
     }
 };
 
