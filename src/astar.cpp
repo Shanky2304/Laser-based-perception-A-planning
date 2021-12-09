@@ -3,6 +3,8 @@
 //
 #define ROW 20
 #define COLUMN 18
+#define MAP_SIZE_X 18
+#define MAP_SIZE_Y 19.6
 
 #include <stdio.h>
 #include <unistd.h>
@@ -30,21 +32,29 @@ private:
     ros::NodeHandle n;
 
     int map[20][18];
+    pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
     // Meant to store row, col of the cell where the src or goal lies.
     pair<int, int> src;
     pair<int, int> goal;
+
+    pair<int, int> origin = make_pair(ROW / 2, COLUMN / 2);
 
 
 public:
     Astar() {
         n = ros::NodeHandle("~");
 
-        float goal_x, goal_y;
+        double goal_x, goal_y;
         n.getParam("goalx", goal_x);
         n.getParam("goaly", goal_y);
 
         // Use co-ordinates and size of map to evaluate the i, j of src and goal;
+        src.first = (int) (origin.first + start_xy.second);
+        src.second = (int) (origin.second - start_xy.first);
+
+        goal.first = (int) (origin.first + goal_y);
+        goal.second = (int) (origin.second - goal_x);
 
 
         // Initalise the map
@@ -404,7 +414,7 @@ public:
                         }
                     }
                 }
-                if(!reachedDest) {
+                if (!reachedDest) {
                     printf("Failed to find the Destination Cell\n");
                     return reachedDest;
                 }
