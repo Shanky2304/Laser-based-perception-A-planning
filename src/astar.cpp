@@ -311,7 +311,7 @@ public:
                     }
 
                     // 5
-                    if (isValid(i - 1, j - 1)) {
+                    if (isValid(i - 1, j - 1) && isUnBlocked(map, i-1, j) && isUnBlocked(map, i, j-1)) {
                         if (isDestination(i - 1, j - 1, goal)) {
                             node[i - 1][j - 1].parent_i = i;
                             node[i - 1][j - 1].parent_j = j;
@@ -341,7 +341,7 @@ public:
                     }
 
                     // 6
-                    if (isValid(i - 1, j + 1)) {
+                    if (isValid(i - 1, j + 1) && isUnBlocked(map, i-1, j) && isUnBlocked(map, i, j+1)) {
                         if (isDestination(i - 1, j + 1, goal)) {
                             node[i - 1][j + 1].parent_i = i;
                             node[i - 1][j + 1].parent_j = j;
@@ -370,7 +370,7 @@ public:
                     }
 
                     // 7
-                    if (isValid(i + 1, j - 1)) {
+                    if (isValid(i + 1, j - 1) && isUnBlocked(map, i+1, j) && isUnBlocked(map, i, j-1)) {
                         if (isDestination(i + 1, j - 1, goal)) {
                             node[i + 1][j - 1].parent_i = i;
                             node[i + 1][j - 1].parent_j = j;
@@ -400,7 +400,7 @@ public:
                     }
 
                     // 8
-                    if (isValid(i + 1, j + 1)) {
+                    if (isValid(i + 1, j + 1) && isUnBlocked(map, i+1, j) && isUnBlocked(map, i, j+1)) {
                         if (isDestination(i + 1, j + 1, goal)) {
                             node[i + 1][j + 1].parent_i = i;
                             node[i + 1][j + 1].parent_j = j;
