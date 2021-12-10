@@ -204,7 +204,7 @@ public:
                 ros::Duration(1).sleep();
             }
         } else {
-            cout << "Drove to goal!!"
+            cout << "Drove to goal!!";
         }
 
     }
