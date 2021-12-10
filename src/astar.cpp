@@ -174,15 +174,22 @@ public:
             cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
 
             pair<int, int> curr_cell = make_pair((int) (origin.first - curr_y), (int) (origin.second + curr_x));
+
+            cout << "Curr cell : (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
+
             double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
                                          / (next_cell.second - curr_cell.second));
-
+		
+	    cout<<"The expected theta : "<<theta_of_slope<<endl;
             double rad_to_turn;
-            if (rpy.z < 0) {
-                rad_to_turn = rpy.z - theta_of_slope;
+            if (rpy.z < 0.0) {
+		cout<<"z is negative"<<endl;
+                rad_to_turn = theta_of_slope - rpy.z;
             } else {
-                rad_to_turn = rpy.z + theta_of_slope;
+		cout<<"z is +ve"<<endl;
+                rad_to_turn = theta_of_slope - rpy.z;
             }
+	    cout << "RPY.z = " << rpy.z << endl;
             cout << "Computed rad to turn: " << rad_to_turn << endl;
 
             if (curr_cell.first == next_cell.first && curr_cell.second == next_cell.second) {
@@ -201,6 +208,8 @@ public:
                 // publish rad_to_turn angular vel in z
                 publish_cmd_vel(twist);
                 ros::Duration(1).sleep();
+		twist.angular.z = 0.0;
+		publish_cmd_vel(twist);
             } else {
                 cout << "We haven't reached the next cell but are facing towards it." << endl;
                 twist.linear.x = 1.0;
