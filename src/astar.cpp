@@ -161,10 +161,6 @@ public:
 
         geometry_msgs::Twist twist;
 
-        // Get the robot's current orientation
-        geometry_msgs::Vector3 rpy;
-        QuaternionToRPY(quat, rpy);
-
         pair<int, int> curr_cell = route.top();
         route.pop();
 
