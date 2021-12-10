@@ -190,7 +190,7 @@ public:
                 twist.linear.x = 0.0;
                 twist.angular.z = 0.0;
                 publish_cmd_vel(twist);
-                pair<int, int> next_cell = route.top();
+                next_cell = route.top();
                 route.pop();
             } else if (abs(rad_to_turn) > 0.01) {
                 cout << "We are not facing the next_cell, rotate." << endl;
