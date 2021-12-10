@@ -18,7 +18,7 @@
 
 using namespace std;
 
-struct node {
+struct node_deets {
 
     int parent_i, parent_j;
     // f = g + h
@@ -34,7 +34,7 @@ private:
     int map[20][18];
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
-    node node[ROW][COLUMN];
+    node_deets node[ROW][COLUMN];
 
     // Meant to store row, col of the cell where the src or goal lies.
     pair<int, int> src;
@@ -96,10 +96,15 @@ public:
 
         int r = goal.first, c = goal.second;
 
-        while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
-            cout << "(" << r << ", " << c << ") <-";
-            r = node[r][c].parent_i;
-            c = node[r][c].parent_j;
+        //while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
+        for (int i = 0; i < ROW; i++) {
+            for (int j = 0; j < COLUMN; j++) {
+            r = node[i][j].parent_i;
+            c = node[i][j].parent_j;
+
+	    cout << "(" << r << "," << c << "),";
+            }
+		    cout<<endl;
         }
 
     }
