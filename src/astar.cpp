@@ -15,6 +15,7 @@
 #include <set>
 #include <stack>
 #include <cmath>
+#include "sensor_msgs/LaserScan.h"
 #include "nav_msgs/Odometry.h"
 #include <geometry_msgs/Point.h>
 #include "geometry_msgs/Vector3.h"
