@@ -21,8 +21,6 @@
 #include "geometry_msgs/Quaternion.h"
 #include "tf/transform_datatypes.h"
 
-#define GetCurrentDir getcwd
-
 using namespace std;
 
 struct node_deets {
@@ -40,7 +38,7 @@ private:
     ros::NodeHandle n;
 
     int map[20][18];
-    int curr_x, curr_y;
+    double curr_x, curr_y;
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
     node_deets node[ROW][COLUMN];
@@ -134,9 +132,7 @@ public:
                     cmd_vel_topic = "/cmd_vel";
             pose_truth_sub = n.subscribe(pose_truth_topic, 1, &Astar::pose_truth_callback, this);
 
-            drive_pub = n.advertise<geometry_msgs::Twist>(cmd_vel_topic, 1, false);
-
-            driveToGoal();
+            drive_pub = n.advertise<geometry_msgs::Twist>(cmd_vel_topic, 10, false);
 
         } else {
             // Do nothing
@@ -145,7 +141,8 @@ public:
     }
 
     void pose_truth_callback(const nav_msgs::Odometry &odom) {
-        cout<<"In the callback!!"<<endl;
+
+        cout << "In the callback!!" << endl;
         geometry_msgs::Quaternion quat = odom.pose.pose.orientation;
         geometry_msgs::Point position = odom.pose.pose.position;
 
@@ -155,6 +152,8 @@ public:
         curr_x = position.x;
         curr_y = position.y;
 
+        cout << "In callback : " << curr_x << ", " << curr_y << endl;
+
     }
 
     void driveToGoal() {
@@ -163,7 +162,7 @@ public:
 
         pair<int, int> curr_cell = route.top();
         route.pop();
-	cout << "Start cell is: (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
+        cout << "Start cell is: (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
 
         // Turn towards goal
         double theta_of_slope = atan((goal.second - curr_y) / (goal.first - curr_x));
@@ -180,8 +179,8 @@ public:
             cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
             route.pop();
             double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
-                    / (next_cell.second - curr_cell.second));
-	    cout<<"RPY.z = "<<rpy.z<<endl;
+                                         / (next_cell.second - curr_cell.second));
+            cout << "RPY.z = " << rpy.z << endl;
             if (rpy.z < 0) {
                 rad_to_turn = rpy.z - theta_of_slope;
             } else {
@@ -191,7 +190,7 @@ public:
             //Rotate the robot
             if (abs(rad_to_turn) > 0.01) {
 
-                twist.angular.z = rad_to_turn*2;
+                twist.angular.z = rad_to_turn * 2;
 
                 // publish rad_to_turn*2 angular vel in z
                 publish_cmd_vel(twist);
@@ -206,7 +205,8 @@ public:
             int c = (int) (origin.second + curr_x);
 
             while (r != next_cell.first && c != next_cell.second) {
-		cout<<"In cell: (" << curr_x << ", " << curr_y << ")" << endl;
+
+                cout << "In cell: (" << curr_x << ", " << curr_y << ")" << endl;
                 twist.linear.x = 1.0;
                 publish_cmd_vel(twist);
                 ros::Duration(1).sleep();
@@ -591,6 +591,7 @@ public:
 int main(int argc, char **argv) {
     ros::init(argc, argv, "astar");
     Astar astar;
+    astar.driveToGoal();
     ros::spin();
     return 0;
 }
