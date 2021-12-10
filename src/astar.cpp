@@ -13,6 +13,13 @@
 #include <fstream>
 #include <limits>
 #include <set>
+#include <stack>
+#include <cmath>
+#include "nav_msgs/Odometry.h"
+#include <geometry_msgs/Point.h>
+#include "geometry_msgs/Vector3.h"
+#include "geometry_msgs/Quaternion.h"
+#include "tf/transform_datatypes.h"
 
 #define GetCurrentDir getcwd
 
@@ -23,6 +30,7 @@ struct node_deets {
     int parent_i, parent_j;
     // f = g + h
     double f, g, h;
+    string dir;
 };
 
 
@@ -32,6 +40,7 @@ private:
     ros::NodeHandle n;
 
     int map[20][18];
+    int curr_x, curr_y;
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
     node_deets node[ROW][COLUMN];
@@ -40,7 +49,13 @@ private:
     pair<int, int> src;
     pair<int, int> goal;
 
-    pair<int, int> origin = make_pair(ROW / 2, COLUMN / 2);
+    pair<int, int> origin = make_pair((ROW / 2) - 1, (COLUMN / 2) - 1);
+
+    stack <pair<int, int>> route;
+
+    ros::Subscriber pose_truth_sub;
+    ros::Publisher drive_pub;
+    geometry_msgs::Vector3 rpy;
 
 
 public:
@@ -52,18 +67,18 @@ public:
         n.getParam("/goaly", goal_y);
         cout << "For goal at: (" << goal_x << ", " << goal_y << ")" << endl;
 
-        cout << "Origin: (" << origin.first << " ," << origin.second << ")";
+        cout << "Origin: (" << origin.first << " ," << origin.second << ")" << endl;
 
         // Use co-ordinates and size of map to evaluate the i, j of src and goal;
         src.first = (int) (origin.first - start_xy.second);
         src.second = (int) (origin.second + start_xy.first);
 
-        cout << "Src_ij: (" << src.first << " ," << src.second << ")";
+        cout << "Src_ij: (" << src.first << " ," << src.second << ")" << endl;
 
         goal.first = (int) (origin.first - goal_y);
         goal.second = (int) (origin.second + goal_x);
 
-        cout << "Goal_ij: (" << goal.first << " ," << goal.second << ")";
+        cout << "Goal_ij: (" << goal.first << " ," << goal.second << ")" << endl;
 
 
         // Initalise the map
@@ -91,26 +106,122 @@ public:
         }
 
         // Plan the path
-        plan(map);
+        if (plan(map)) {
 
-        int r = goal.first, c = goal.second;
+            int r = goal.first, c = goal.second;
 
-        while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
-		cout<<"("<<r<<", "<<c<<") ->";
-		r = node[r][c].parent_i;
-		c = node[r][c].parent_j;
-	}
-
-        for (int i = 0; i < ROW; i++) {
-            for (int j = 0; j < COLUMN; j++) {
-            r = node[i][j].parent_i;
-            c = node[i][j].parent_j;
-
-	    cout << "(" << r << "," << c << "),";
+            //Print route chain
+            while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
+                cout << "(" << r << ", " << c << ") ->";
+                route.push(make_pair(r, c));
+                r = node[r][c].parent_i;
+                c = node[r][c].parent_j;
             }
-		    cout<<endl;
+            route.push(make_pair(r, c));
+            /*
+             * Print A* exploration map, every cell contains the row, col value of its parent.
+             * Obstacles or unvisited cells have the value (-1, -1).
+            for (int i = 0; i < ROW; i++) {
+                for (int j = 0; j < COLUMN; j++) {
+                    r = node[i][j].parent_i;
+                    c = node[i][j].parent_j;
+
+                    cout << "(" << r << "," << c << "),";
+                }
+                cout << endl;
+            }*/
+            string pose_truth_topic = "/base_pose_ground_truth",
+                    cmd_vel_topic = "/cmd_vel";
+            pose_truth_sub = n.subscribe(pose_truth_topic, 1, &Astar::pose_truth_callback, this);
+
+            drive_pub = n.advertise<geometry_msgs::Twist>(cmd_vel_topic, 1, false);
+
+            driveToGoal();
+
+        } else {
+            // Do nothing
         }
 
+    }
+
+    void pose_truth_callback(const nav_msgs::Odometry &odom) {
+
+        geometry_msgs::Quaternion quat = odom.pose.pose.orientation;
+        geometry_msgs::Point position = odom.pose.pose.position;
+
+        // Get the robot's current orientation
+        QuaternionToRPY(quat, rpy);
+
+        curr_x = position.x;
+        curr_y = position.y;
+
+    }
+
+    void driveToGoal() {
+
+        geometry_msgs::Twist twist;
+
+        // Get the robot's current orientation
+        geometry_msgs::Vector3 rpy;
+        QuaternionToRPY(quat, rpy);
+
+        pair<int, int> curr_cell = route.top();
+        route.pop();
+
+        while (!route.empty()) {
+            //Decide which direction we need to go in.
+            pair<int, int> next_cell = route.top();
+            double theta_of_slope = atan((next_cell.first - curr_cell.first) / (next_cell.second - curr_cell.second));
+            double rad_to_turn;
+            if (rpy.z < 0) {
+                rad_to_turn = rpy.z - theta_of_slope;
+            } else {
+                rad_to_turn = rpy.z + theta_of_slope;
+            }
+            //Rotate the robot
+            if (abs(rad_to_turn) > 0.01) {
+
+                twist.angular.z = rad_to_turn*2;
+
+                // publish rad_to_turn*2 angular vel in z
+                publish_cmd_vel(twist);
+                // Let the robot turn we can safely ignore callbacks while it's turning.
+                ros::Duration(1).sleep();
+                twist.angular.z = 0.0;
+                publish_cmd_vel(twist);
+
+            }
+            //Drive linearly with speed 1 and sleep for 1 sec to reach the next block
+            twist.linear.x = 1.0;
+            publish_cmd_vel(twist);
+            ros::Duration(1).sleep();
+            twist.linear.x = 0.0;
+            publish_cmd_vel(twist);
+        }
+    }
+
+    void publish_cmd_vel(geometry_msgs::Twist twist) {
+
+        ROS_INFO_STREAM("Twist.linear.x = " << twist.linear.x);
+        ROS_INFO_STREAM("Twist.angular.x = " << twist.angular.z);
+        drive_pub.publish(twist);
+
+    }
+
+    // Function for conversion of quaternion to roll pitch and yaw.
+    void QuaternionToRPY(const geometry_msgs::Quaternion msg, geometry_msgs::Vector3 &rpy) {
+        // the incoming geometry_msgs::Quaternion is transformed to a tf::Quaterion
+        tf::Quaternion quat;
+        tf::quaternionMsgToTF(msg, quat);
+
+        // the tf::Quaternion has a method to acess roll pitch and yaw
+        double roll, pitch, yaw;
+        tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+
+        // the found angles are written in a geometry_msgs::Vector3
+        rpy.x = roll;
+        rpy.y = pitch;
+        rpy.z = yaw;
     }
 
     bool isDestination(int row, int col, pair<int, int> dest) {
@@ -320,7 +431,8 @@ public:
                     }
 
                     // 5
-                    if (isValid(i - 1, j - 1) && isUnBlocked(map, i-1, j) && isUnBlocked(map, i, j-1)) {
+                    if (isValid(i - 1, j - 1) && isUnBlocked(map, i - 1, j)
+                        && isUnBlocked(map, i, j - 1)) {
                         if (isDestination(i - 1, j - 1, goal)) {
                             node[i - 1][j - 1].parent_i = i;
                             node[i - 1][j - 1].parent_j = j;
@@ -350,7 +462,8 @@ public:
                     }
 
                     // 6
-                    if (isValid(i - 1, j + 1) && isUnBlocked(map, i-1, j) && isUnBlocked(map, i, j+1)) {
+                    if (isValid(i - 1, j + 1) && isUnBlocked(map, i - 1, j)
+                        && isUnBlocked(map, i, j + 1)) {
                         if (isDestination(i - 1, j + 1, goal)) {
                             node[i - 1][j + 1].parent_i = i;
                             node[i - 1][j + 1].parent_j = j;
@@ -379,7 +492,8 @@ public:
                     }
 
                     // 7
-                    if (isValid(i + 1, j - 1) && isUnBlocked(map, i+1, j) && isUnBlocked(map, i, j-1)) {
+                    if (isValid(i + 1, j - 1) && isUnBlocked(map, i + 1, j)
+                        && isUnBlocked(map, i, j - 1)) {
                         if (isDestination(i + 1, j - 1, goal)) {
                             node[i + 1][j - 1].parent_i = i;
                             node[i + 1][j - 1].parent_j = j;
@@ -409,7 +523,8 @@ public:
                     }
 
                     // 8
-                    if (isValid(i + 1, j + 1) && isUnBlocked(map, i+1, j) && isUnBlocked(map, i, j+1)) {
+                    if (isValid(i + 1, j + 1) && isUnBlocked(map, i + 1, j)
+                        && isUnBlocked(map, i, j + 1)) {
                         if (isDestination(i + 1, j + 1, goal)) {
                             node[i + 1][j + 1].parent_i = i;
                             node[i + 1][j + 1].parent_j = j;
