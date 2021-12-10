@@ -42,6 +42,7 @@ private:
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
     node_deets node[ROW][COLUMN];
+    bool done = 0;
 
     // Meant to store row, col of the cell where the src or goal lies.
     pair<int, int> src;
@@ -142,81 +143,134 @@ public:
 
     void pose_truth_callback(const nav_msgs::Odometry &odom) {
 
-        cout << "In the callback!!" << endl;
-        geometry_msgs::Quaternion quat = odom.pose.pose.orientation;
-        geometry_msgs::Point position = odom.pose.pose.position;
+        if (!done) {
 
-        // Get the robot's current orientation
-        QuaternionToRPY(quat, rpy);
+            cout << "In the callback!!" << endl;
+            geometry_msgs::Quaternion quat = odom.pose.pose.orientation;
+            geometry_msgs::Point position = odom.pose.pose.position;
+            geometry_msgs::Twist twist;
 
-        curr_x = position.x;
-        curr_y = position.y;
+            // Get the robot's current orientation
+            QuaternionToRPY(quat, rpy);
 
-        cout << "In callback : " << curr_x << ", " << curr_y << endl;
+            curr_x = position.x;
+            curr_y = position.y;
 
-    }
+            cout << "In callback : " << curr_x << ", " << curr_y << endl;
 
-    void driveToGoal() {
+            if(route.empty()) {
+                done = 1;
+                return;
+            }
 
-        geometry_msgs::Twist twist;
-
-        pair<int, int> curr_cell = route.top();
-        route.pop();
-        cout << "Start cell is: (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
-
-        // Turn towards goal
-        double theta_of_slope = atan((goal.second - curr_y) / (goal.first - curr_x));
-        double rad_to_turn;
-        if (rpy.z < 0) {
-            rad_to_turn = rpy.z - theta_of_slope;
-        } else {
-            rad_to_turn = rpy.z + theta_of_slope;
-        }
-
-        while (!route.empty()) {
-            //Decide which direction we need to go in.
+            geometry_msgs::Twist twist;
             pair<int, int> next_cell = route.top();
-            cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
             route.pop();
+
+            cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
+
+            pair<int, int> curr_cell = make_pair((int) (origin.first - curr_y), (int) (origin.second + curr_x));
             double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
                                          / (next_cell.second - curr_cell.second));
-            cout << "RPY.z = " << rpy.z << endl;
+
+            double rad_to_turn;
             if (rpy.z < 0) {
                 rad_to_turn = rpy.z - theta_of_slope;
             } else {
                 rad_to_turn = rpy.z + theta_of_slope;
             }
-            cout << "Computed rad to turn: " << rad_to_turn << endl;
-            //Rotate the robot
-            if (abs(rad_to_turn) > 0.01) {
+            cout << "Computed rad to turn: " << rad_to_turn << endl
 
-                twist.angular.z = rad_to_turn * 2;
-
-                // publish rad_to_turn*2 angular vel in z
-                publish_cmd_vel(twist);
-                // Let the robot turn we can safely ignore callbacks while it's turning.
-                ros::Duration(5).sleep();
+            if (curr_cell.first == next_cell.first && curr_cell.second == next_cell.second) {
+                cout<<"Reached next cell!"<<endl;
+                // Stop the car and update next_cell
+                twist.linear.x = 0.0;
                 twist.angular.z = 0.0;
                 publish_cmd_vel(twist);
+                pair<int, int> next_cell = route.top();
+                route.pop();
+            } else if (abs(rad_to_turn) > 0.01) {
+                // We are not facing the next_cell, rotate
 
-            }
-            //Drive linearly with speed 1 till we reach the next block
-            int r = (int) (origin.first - curr_y);
-            int c = (int) (origin.second + curr_x);
-
-            while (r != next_cell.first && c != next_cell.second) {
-
-                cout << "In cell: (" << curr_x << ", " << curr_y << ")" << endl;
+                    twist.angular.z = rad_to_turn;
+                    twist.linear.x = 0.0;
+                    // publish rad_to_turn angular vel in z
+                    publish_cmd_vel(twist);
+                    ros::Duration(1).sleep();
+            } else {
+                // We haven't reached the next cell but are facing towards it
                 twist.linear.x = 1.0;
+                twist.angular.z = 0.0;
                 publish_cmd_vel(twist);
                 ros::Duration(1).sleep();
             }
-            // Reached next cell
-            twist.linear.x = 0.0;
-            publish_cmd_vel(twist);
-            curr_cell = next_cell;
+        } else {
+            cout << "Drove to goal!!"
         }
+
     }
+
+//    void driveToGoal() {
+//
+//        geometry_msgs::Twist twist;
+//
+//        pair<int, int> curr_cell = route.top();
+//        route.pop();
+//        cout << "Start cell is: (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
+//
+//        // Turn towards goal
+//        double theta_of_slope = atan((goal.second - curr_y) / (goal.first - curr_x));
+//        double rad_to_turn;
+//        if (rpy.z < 0) {
+//            rad_to_turn = rpy.z - theta_of_slope;
+//        } else {
+//            rad_to_turn = rpy.z + theta_of_slope;
+//        }
+//
+//        while (!route.empty()) {
+//            //Decide which direction we need to go in.
+//            pair<int, int> next_cell = route.top();
+//            cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
+//            route.pop();
+//            double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
+//                                         / (next_cell.second - curr_cell.second));
+//            cout << "RPY.z = " << rpy.z << endl;
+//            if (rpy.z < 0) {
+//                rad_to_turn = rpy.z - theta_of_slope;
+//            } else {
+//                rad_to_turn = rpy.z + theta_of_slope;
+//            }
+//            cout << "Computed rad to turn: " << rad_to_turn << endl;
+//            //Rotate the robot
+//            if (abs(rad_to_turn) > 0.01) {
+//
+//                twist.angular.z = rad_to_turn * 2;
+//
+//                // publish rad_to_turn*2 angular vel in z
+//                publish_cmd_vel(twist);
+//                // Let the robot turn we can safely ignore callbacks while it's turning.
+//                ros::Duration(5).sleep();
+//                twist.angular.z = 0.0;
+//                publish_cmd_vel(twist);
+//
+//            }
+//            //Drive linearly with speed 1 till we reach the next block
+//            int r = (int) (origin.first - curr_y);
+//            int c = (int) (origin.second + curr_x);
+//
+//            while (r != next_cell.first && c != next_cell.second) {
+//
+//                cout << "In cell: (" << curr_x << ", " << curr_y << ")" << endl;
+//                twist.linear.x = 1.0;
+//                publish_cmd_vel(twist);
+//                ros::Duration(1).sleep();
+//            }
+//            // Reached next cell
+//            twist.linear.x = 0.0;
+//            publish_cmd_vel(twist);
+//            curr_cell = next_cell;
+//        }
+//    }
 
     void publish_cmd_vel(geometry_msgs::Twist twist) {
 
@@ -248,7 +302,6 @@ public:
         else
             return (false);
     }
-
 
     bool isValid(int row, int col) {
         return (row >= 0) && (row < ROW) && (col >= 0)
@@ -592,6 +645,5 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "astar");
     Astar astar;
     ros::spin();
-    astar.driveToGoal();
     return 0;
 }
