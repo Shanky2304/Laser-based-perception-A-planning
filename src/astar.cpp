@@ -164,19 +164,27 @@ public:
         pair<int, int> curr_cell = route.top();
         route.pop();
 
+        // Turn towards goal
+        double theta_of_slope = atan((goal.second - curr_y) / (goal.first - curr_x));
+        double rad_to_turn;
+        if (rpy.z < 0) {
+            rad_to_turn = rpy.z - theta_of_slope;
+        } else {
+            rad_to_turn = rpy.z + theta_of_slope;
+        }
+
         while (!route.empty()) {
             //Decide which direction we need to go in.
             pair<int, int> next_cell = route.top();
-	    cout<<"Next cell to go to: ("<<next_cell.first<<", "<<next_cell.second<<")"<<endl;
-	    route.pop();
-            double theta_of_slope = atan((next_cell.second - curr_cell.second) / (next_cell.first - curr_cell.second));
-            double rad_to_turn;
+            cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
+            route.pop();
+            double theta_of_slope = atan((next_cell.first - curr_cell.first) / (next_cell.second - curr_cell.second));
             if (rpy.z < 0) {
                 rad_to_turn = rpy.z - theta_of_slope;
             } else {
                 rad_to_turn = rpy.z + theta_of_slope;
             }
-	    cout<<"Computed rad to turn: "<<rad_to_turn<<endl;
+            cout << "Computed rad to turn: " << rad_to_turn << endl;
             //Rotate the robot
             if (abs(rad_to_turn) > 0.01) {
 
@@ -196,7 +204,7 @@ public:
             ros::Duration(1).sleep();
             twist.linear.x = 0.0;
             publish_cmd_vel(twist);
-	    curr_cell = next_cell;
+            curr_cell = next_cell;
         }
     }
 
