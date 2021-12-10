@@ -163,7 +163,6 @@ public:
                 return;
             }
 
-            geometry_msgs::Twist twist;
             pair<int, int> next_cell = route.top();
             route.pop();
 
@@ -179,7 +178,7 @@ public:
             } else {
                 rad_to_turn = rpy.z + theta_of_slope;
             }
-            cout << "Computed rad to turn: " << rad_to_turn << endl
+            cout << "Computed rad to turn: " << rad_to_turn << endl;
 
             if (curr_cell.first == next_cell.first && curr_cell.second == next_cell.second) {
                 cout<<"Reached next cell!"<<endl;
