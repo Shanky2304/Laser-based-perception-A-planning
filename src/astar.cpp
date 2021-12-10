@@ -145,7 +145,7 @@ public:
     }
 
     void pose_truth_callback(const nav_msgs::Odometry &odom) {
-
+        cout<<"In the callback!!"<<endl;
         geometry_msgs::Quaternion quat = odom.pose.pose.orientation;
         geometry_msgs::Point position = odom.pose.pose.position;
 
@@ -163,6 +163,7 @@ public:
 
         pair<int, int> curr_cell = route.top();
         route.pop();
+	cout << "Start cell is: (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
 
         // Turn towards goal
         double theta_of_slope = atan((goal.second - curr_y) / (goal.first - curr_x));
@@ -180,6 +181,7 @@ public:
             route.pop();
             double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
                     / (next_cell.second - curr_cell.second));
+	    cout<<"RPY.z = "<<rpy.z<<endl;
             if (rpy.z < 0) {
                 rad_to_turn = rpy.z - theta_of_slope;
             } else {
@@ -189,12 +191,12 @@ public:
             //Rotate the robot
             if (abs(rad_to_turn) > 0.01) {
 
-                twist.angular.z = rad_to_turn;
+                twist.angular.z = rad_to_turn*2;
 
                 // publish rad_to_turn*2 angular vel in z
                 publish_cmd_vel(twist);
                 // Let the robot turn we can safely ignore callbacks while it's turning.
-                ros::Duration(1).sleep();
+                ros::Duration(5).sleep();
                 twist.angular.z = 0.0;
                 publish_cmd_vel(twist);
 
@@ -204,6 +206,7 @@ public:
             int c = (int) (origin.second + curr_x);
 
             while (r != next_cell.first && c != next_cell.second) {
+		cout<<"In cell: (" << curr_x << ", " << curr_y << ")" << endl;
                 twist.linear.x = 1.0;
                 publish_cmd_vel(twist);
                 ros::Duration(1).sleep();
