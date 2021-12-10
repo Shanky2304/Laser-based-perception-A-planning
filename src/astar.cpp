@@ -178,7 +178,8 @@ public:
             pair<int, int> next_cell = route.top();
             cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
             route.pop();
-            double theta_of_slope = atan((next_cell.first - curr_cell.first) / (next_cell.second - curr_cell.second));
+            double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
+                    / (next_cell.second - curr_cell.second));
             if (rpy.z < 0) {
                 rad_to_turn = rpy.z - theta_of_slope;
             } else {
@@ -198,10 +199,16 @@ public:
                 publish_cmd_vel(twist);
 
             }
-            //Drive linearly with speed 1 and sleep for 1 sec to reach the next block
-            twist.linear.x = 1.0;
-            publish_cmd_vel(twist);
-            ros::Duration(1).sleep();
+            //Drive linearly with speed 1 till we reach the next block
+            int r = (int) (origin.first - curr_y);
+            int c = (int) (origin.second + curr_x);
+
+            while (r != next_cell.first && c != next_cell.second) {
+                twist.linear.x = 1.0;
+                publish_cmd_vel(twist);
+                ros::Duration(1).sleep();
+            }
+            // Reached next cell
             twist.linear.x = 0.0;
             publish_cmd_vel(twist);
             curr_cell = next_cell;
