@@ -591,7 +591,7 @@ public:
 int main(int argc, char **argv) {
     ros::init(argc, argv, "astar");
     Astar astar;
-    astar.driveToGoal();
     ros::spin();
+    astar.driveToGoal();
     return 0;
 }
