@@ -47,6 +47,7 @@ private:
     // Meant to store row, col of the cell where the src or goal lies.
     pair<int, int> src;
     pair<int, int> goal;
+    pair<int, int> next_cell;
 
     pair<int, int> origin = make_pair((ROW / 2), (COLUMN / 2));
 
@@ -163,8 +164,8 @@ public:
                 return;
             }
 
-            pair<int, int> next_cell;
             if (flag) {
+                cout<<"Only runs the first time."<<endl;
                 next_cell = route.top();
                 route.pop();
                 flag = 0;
