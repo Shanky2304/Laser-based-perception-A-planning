@@ -74,7 +74,7 @@ public:
             int row = 0, col = 0;
             while (!mapfile.eof()) {
 
-                // If not valid digit ASCII ignore
+                // If not a valid digit ignore
                 val = mapfile.get();
                 if (val == '0' || val == '1') {
 
@@ -85,7 +85,6 @@ public:
                         row++;
                     }
                     col = col % COLUMN;
-
                 }
             }
             mapfile.close();
@@ -96,7 +95,12 @@ public:
 
         int r = goal.first, c = goal.second;
 
-        //while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
+        while (!(node[r][c].parent_i == r && node[r][c].parent_j == c)) {
+		cout<<"("<<r<<", "<<c<<") ->";
+		r = node[r][c].parent_i;
+		c = node[r][c].parent_j;
+	}
+
         for (int i = 0; i < ROW; i++) {
             for (int j = 0; j < COLUMN; j++) {
             r = node[i][j].parent_i;
