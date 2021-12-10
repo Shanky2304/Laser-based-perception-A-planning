@@ -42,7 +42,7 @@ private:
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
     node_deets node[ROW][COLUMN];
-    bool done = 0;
+    bool done = 0, flag = 1;
 
     // Meant to store row, col of the cell where the src or goal lies.
     pair<int, int> src;
@@ -158,13 +158,17 @@ public:
 
             cout << "In callback : " << curr_x << ", " << curr_y << endl;
 
-            if(route.empty()) {
+            if (route.empty()) {
                 done = 1;
                 return;
             }
 
-            pair<int, int> next_cell = route.top();
-            route.pop();
+            pair<int, int> next_cell;
+            if (flag) {
+                next_cell = route.top();
+                route.pop();
+                flag = 0;
+            }
 
             cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
 
@@ -181,7 +185,7 @@ public:
             cout << "Computed rad to turn: " << rad_to_turn << endl;
 
             if (curr_cell.first == next_cell.first && curr_cell.second == next_cell.second) {
-                cout<<"Reached next cell!"<<endl;
+                cout << "Reached next cell!" << endl;
                 // Stop the car and update next_cell
                 twist.linear.x = 0.0;
                 twist.angular.z = 0.0;
@@ -189,15 +193,15 @@ public:
                 pair<int, int> next_cell = route.top();
                 route.pop();
             } else if (abs(rad_to_turn) > 0.01) {
-                // We are not facing the next_cell, rotate
+                cout << "We are not facing the next_cell, rotate." << endl;
 
-                    twist.angular.z = rad_to_turn;
-                    twist.linear.x = 0.0;
-                    // publish rad_to_turn angular vel in z
-                    publish_cmd_vel(twist);
-                    ros::Duration(1).sleep();
+                twist.angular.z = rad_to_turn;
+                twist.linear.x = 0.0;
+                // publish rad_to_turn angular vel in z
+                publish_cmd_vel(twist);
+                ros::Duration(1).sleep();
             } else {
-                // We haven't reached the next cell but are facing towards it
+                cout << "We haven't reached the next cell but are facing towards it." << endl;
                 twist.linear.x = 1.0;
                 twist.angular.z = 0.0;
                 publish_cmd_vel(twist);
