@@ -52,8 +52,9 @@ private:
     pair<int, int> origin = make_pair((ROW / 2), (COLUMN / 2));
 
     stack <pair<int, int>> route;
+    double min_dist;
 
-    ros::Subscriber pose_truth_sub;
+    ros::Subscriber pose_truth_sub, scan_sub;
     ros::Publisher drive_pub;
     geometry_msgs::Vector3 rpy;
 
@@ -131,8 +132,10 @@ public:
                 cout << endl;
             }*/
             string pose_truth_topic = "/base_pose_ground_truth",
-                    cmd_vel_topic = "/cmd_vel";
+                    cmd_vel_topic = "/cmd_vel",
+                    scan_topic = "/base_scan";
             pose_truth_sub = n.subscribe(pose_truth_topic, 1, &Astar::pose_truth_callback, this);
+            scan_sub = n.subscribe(scan_topic, 1, &Astar::scan_callback, this);
 
             drive_pub = n.advertise<geometry_msgs::Twist>(cmd_vel_topic, 10, false);
 
@@ -140,6 +143,11 @@ public:
             // Do nothing
         }
 
+    }
+
+    void scan_callback(const sensor_msgs::LaserScan & lc_msg) {
+        std::vector<double> ranges(lc_msg.ranges.begin() + 100, lc_msg.ranges.begin() + 240);
+        min_dist = *min_element(std::begin(ranges), std::end(ranges));
     }
 
     void pose_truth_callback(const nav_msgs::Odometry &odom) {
@@ -165,7 +173,7 @@ public:
             }
 
             if (flag) {
-                cout<<"Only runs the first time."<<endl;
+                cout << "Only runs the first time." << endl;
                 next_cell = route.top();
                 route.pop();
                 flag = 0;
@@ -179,17 +187,17 @@ public:
 
             double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
                                          / (next_cell.second - curr_cell.second));
-		
-	    cout<<"The expected theta : "<<theta_of_slope<<endl;
+
+            cout << "The expected theta : " << theta_of_slope << endl;
             double rad_to_turn;
             if (rpy.z < 0.0) {
-		cout<<"z is negative"<<endl;
+                cout << "z is negative" << endl;
                 rad_to_turn = theta_of_slope - rpy.z;
             } else {
-		cout<<"z is +ve"<<endl;
+                cout << "z is +ve" << endl;
                 rad_to_turn = theta_of_slope - rpy.z;
             }
-	    cout << "RPY.z = " << rpy.z << endl;
+            cout << "RPY.z = " << rpy.z << endl;
             cout << "Computed rad to turn: " << rad_to_turn << endl;
 
             if (curr_cell.first == next_cell.first && curr_cell.second == next_cell.second) {
@@ -208,12 +216,19 @@ public:
                 // publish rad_to_turn angular vel in z
                 publish_cmd_vel(twist);
                 ros::Duration(1).sleep();
-		twist.angular.z = 0.0;
-		publish_cmd_vel(twist);
+                twist.angular.z = 0.0;
+                publish_cmd_vel(twist);
             } else {
                 cout << "We haven't reached the next cell but are facing towards it." << endl;
-                twist.linear.x = 1.0;
-                twist.angular.z = 0.0;
+                if(min_dist < 1) {
+                    cout<<"Heading towards an obstacle, so turn away"<<endl;
+                    twist.linear.x = 1.0;
+                    twist.angular.z = -1.0;
+                } else {
+                    cout<<"No obstacle, go straight!"<<endl;
+                    twist.linear.x = 1.0;
+                    twist.angular.z = 0.0;
+                }
                 publish_cmd_vel(twist);
                 ros::Duration(1).sleep();
             }
