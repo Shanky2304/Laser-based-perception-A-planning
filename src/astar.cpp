@@ -147,7 +147,7 @@ public:
     }
 
     void scan_callback(const sensor_msgs::LaserScan & lc_msg) {
-        std::vector<double> ranges(lc_msg.ranges.begin() + 100, lc_msg.ranges.begin() + 240);
+        std::vector<double> ranges(lc_msg.ranges.begin() + 100, lc_msg.ranges.begin() + 300);
         min_dist = *min_element(std::begin(ranges), std::end(ranges));
     }
 
@@ -168,7 +168,9 @@ public:
 
             cout << "In callback : " << curr_x << ", " << curr_y << endl;
 
-            if (route.empty()) {
+            pair<int, int> curr_cell = make_pair((int) (origin.first - curr_y), (int) (origin.second + curr_x));
+
+            if (route.empty() && curr_cell.first == next_cell.first && curr_cell.second == next_cell.second) {
                 done = 1;
                 return;
             }
@@ -182,12 +184,11 @@ public:
 
             cout << "Next cell to go to: (" << next_cell.first << ", " << next_cell.second << ")" << endl;
 
-            pair<int, int> curr_cell = make_pair((int) (origin.first - curr_y), (int) (origin.second + curr_x));
 
             cout << "Curr cell : (" << curr_cell.first << ", " << curr_cell.second << ")" << endl;
 
-            double theta_of_slope = atan((-1 * (next_cell.first - curr_cell.first))
-                                         / (next_cell.second - curr_cell.second));
+            double theta_of_slope = atan2((-1 * (next_cell.first - curr_cell.first))
+                                         , (next_cell.second - curr_cell.second));
 
             cout << "The expected theta : " << theta_of_slope << endl;
             double rad_to_turn;
@@ -209,10 +210,10 @@ public:
                 publish_cmd_vel(twist);
                 next_cell = route.top();
                 route.pop();
-            } else if (abs(rad_to_turn) > 0.01) {
+            } else if (min_dist > 1.0 && abs(rad_to_turn) > 0.01) {
                 cout << "We are not facing the next_cell, rotate." << endl;
 
-                twist.angular.z = rad_to_turn;
+                twist.angular.z = rad_to_turn*2;
                 twist.linear.x = 0.0;
                 // publish rad_to_turn angular vel in z
                 publish_cmd_vel(twist);
@@ -223,8 +224,8 @@ public:
                 cout << "We haven't reached the next cell but are facing towards it." << endl;
                 if(min_dist < 1) {
                     cout<<"Heading towards an obstacle, so turn away"<<endl;
-                    twist.linear.x = 1.0;
-                    twist.angular.z = -1.0;
+                    twist.linear.x = 0.5;
+                    twist.angular.z = -3.0;
                 } else {
                     cout<<"No obstacle, go straight!"<<endl;
                     twist.linear.x = 1.0;
