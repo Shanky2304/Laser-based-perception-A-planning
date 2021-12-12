@@ -38,7 +38,29 @@ class Astar {
 private:
     ros::NodeHandle n;
 
-    int map[20][18];
+    int map[20][18] = {
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,1,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0},
+        {0,0,1,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0},
+        {0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
+        {0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1},
+        {0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1},
+        {0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1},
+        {0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0},
+        {0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,1,0},
+        {0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,1}
+
+    };
     double curr_x, curr_y;
     pair<double, double> start_xy = make_pair(-8.0, -2.0);
 
@@ -83,29 +105,29 @@ public:
         cout << "Goal_ij: (" << goal.first << " ," << goal.second << ")" << endl;
 
 
-        // Initalise the map
-        fstream mapfile;
-        mapfile.open("map.txt", ios::in);
-        if (mapfile.is_open()) {
-            char val;
-            int row = 0, col = 0;
-            while (!mapfile.eof()) {
+        // // Initalise the map from file
+        // fstream mapfile;
+        // mapfile.open("map.txt", ios::in);
+        // if (mapfile.is_open()) {
+        //     char val;
+        //     int row = 0, col = 0;
+        //     while (!mapfile.eof()) {
 
-                // If not a valid digit ignore
-                val = mapfile.get();
-                if (val == '0' || val == '1') {
+        //         // If not a valid digit ignore
+        //         val = mapfile.get();
+        //         if (val == '0' || val == '1') {
 
-                    map[row][col] = (int) val - (int) '0';
+        //             map[row][col] = (int) val - (int) '0';
 
-                    col++;
-                    if (col % COLUMN == 0) {
-                        row++;
-                    }
-                    col = col % COLUMN;
-                }
-            }
-            mapfile.close();
-        }
+        //             col++;
+        //             if (col % COLUMN == 0) {
+        //                 row++;
+        //             }
+        //             col = col % COLUMN;
+        //         }
+        //     }
+        //     mapfile.close();
+        // }
 
         // Plan the path
         if (plan(map)) {
